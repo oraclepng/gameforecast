@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Forecast - Find Your Next Favorite Game</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⛅</text></svg>">
+    <style>
+        :root {
+            --primary-color: #6c63ff;
+            --primary-hover: #574fdf;
+            --bg-light: #f4f4f9;
+            --text-light: #333;
+            --bg-dark: #121212;
+            --text-dark: #f4f4f9;
+            --container-light: white;
+            --container-dark: #1e1e1e;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: calc(100vh - 100px);
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--container-light);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            padding: 20px;
+            width: 100%;
+            transition: background-color 0.3s;
+            margin-bottom: 20px;
+        }
+
+        body.dark-mode .container {
+            background: var(--container-dark);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .dark-mode-toggle {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.dark-mode-toggle:hover {
+    background-color: var(--primary-hover);
+    transform: scale(1.1);
+}
+
+        #results {
+            display: none;
+        }
+
+        #results ul {
+            list-style-type: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        #results li {
+            background-color: rgba(108, 99, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        #results li:hover {
+            transform: scale(1.05);
+        }
+
+        #results li img {
+            width: 100%;
+            height: 352px;
+            object-fit: cover;
+        }
+
+        #results li .game-info {
+            padding: 10px;
+        }
+
+        #results li .game-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        #results li .game-genres {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        #results li .game-length,
+        #results li .game-pegi {
+            font-size: 0.8em;
+            color: #888;
+        }
+
+        body.dark-mode #results li .game-genres {
+            color: #aaa;
+        }
+
+        body.dark-mode #results li .game-length,
+        body.dark-mode #results li .game-pegi {
+            color: #777;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: var(--container-light);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+        }
+
+        body.dark-mode .modal-content {
+            background-color: var(--container-dark);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        body.dark-mode .close:hover,
+        body.dark-mode .close:focus {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Game Forecast</h1>
+        <p>Find your next favorite game!</p>
+        <button class="dark-mode-toggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+            🌓
+        </button>
+    </header>
+    <main>
+        <section class="container">
+            <h2>Game Quiz</h2>
+            <form id="game-quiz">
+                <label for="platform">Preferred Platform:</label>
+                <select id="platform" name="platform" required>
+                    <option value="">Select a platform</option>
+                    <option value="nes">NES</option>
+                    <option value="snes">SNES</option>
+                    <option value="n64">Nintendo 64</option>
+                    <option value="gc">GameCube</option>
+                    <option value="wii">Wii</option>
+                    <option value="wiiu">Wii U</option>
+                    <option value="switch">Nintendo Switch</option>
+                    <option value="ps1">PlayStation 1</option>
+                    <option value="ps2">PlayStation 2</option>
+                    <option value="ps3">PlayStation 3</option>
+                    <option value="ps4">PlayStation 4</option>
+                    <option value="ps5">PlayStation 5</option>
+                    <option value="xb">Xbox</option>
+                    <option value="xb360">Xbox 360</option>
+                    <option value="xb1">Xbox One</option>
+                    <option value="xbsx">Xbox Series S|X</option>
+                    <option value="steam">Steam</option>
+                    <option value="epic">Epic Games</option>
+                    <option value="ios">iOS</option>
+                    <option value="android">Android</option>
+                    <option value="other">Other</option>
+                </select>
+
+                <label for="genre">Favorite Genre:</label>
+                <select id="genre" name="genre" required>
+                    <option value="">Select a genre</option>
+                    <option value="action">Action</option>
+                    <option value="adventure">Adventure</option>
+                    <option value="rpg">RPG</option>
+                    <option value="strategy">Strategy</option>
+                    <option value="simulation">Simulation</option>
+                    <option value="indie">Indie</option>
+                    <option value="sports">Sports</option>
+                    <option value="horror">Horror</option>
+                    <option value="ftp">Free to Play</option>
+                    <option value="phorror">Psychological Horror</option>
+
+                </select>
+
+                <label for="time">Available Playtime:</label>
+                <select id="time" name="time" required>
+                    <option value="">Select playtime</option>
+                    <option value="short">Short(1-9 Hours)</option>
+                    <option value="medium">Medium(10-29 Hours)</option>
+                    <option value="long">Long(30-69 Hours)</option>
+                    <option value="vlong">Very Long(70+ Hours)</option>
+                </select>
+
+                <button type="submit">Get Suggestions</button>
+            </form>
+        </section>
+        <section id="results" class="container">
+            <h2>Game Suggestions</h2>
+            <ul id="suggestions-list"></ul>
+        </section>
+    </main>
+    <div id="gameModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <img id="modalImage" src="/placeholder.svg" alt="Game cover art" style="width:100%;max-width:264px;display:block;margin:0 auto;">
+            <p id="modalDescription"></p>
+            <p id="modalGenres"></p>
+            <p id="modalLength"></p>
+            <p id="modalPegi"></p>
+        </div>
+    </div>
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        function loadDarkModePreference() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadDarkModePreference);
+
+        document.getElementById('game-quiz').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const platform = document.getElementById('platform').value;
+            const genre = document.getElementById('genre').value;
+            const time = document.getElementById('time').value;
+
+            const suggestions = getRandomGames(9);
+
+            displaySuggestions(suggestions);
+        });
+
+        function getRandomGames(count) {
+            const games = [
+                {
+                    title: "The Legend of Zelda: Breath of the Wild",
+                    description: "The Legend of Zelda: Breath of the Wild is the first 3D open-world game in the Zelda series. Link can travel anywhere and be equipped with weapons and armor found throughout the world to grant him various bonuses. Unlike many games in the series, Breath of the Wild does not impose a specific order in which quests or dungeons must be completed. While the game still has environmental obstacles such as weather effects, inhospitable lands, or powerful enemies, many of them can be overcome using the right method. A lot of critics ranked Breath of the Wild as one of the best video games of all time.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co3p2d.webp",
+                    genres: ["Action", "Adventure", "Open World"],
+                    length: "Long (50+ hours)",
+                    pegi: "PEGI 12"
+                },
+                {
+                    title: "Portal 2",
+                    description: "Sequel to the acclaimed Portal (2007), Portal 2 pits the protagonist of the original game, Chell, and her new robot friend, Wheatley, against more puzzles conceived by GLaDOS, an A.I. with the sole purpose of testing the Portal Gun's mechanics and taking revenge on Chell for the events of Portal. As a result of several interactions and revelations, Chell once again pushes to escape Aperture Science Labs.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1rs4.webp",
+                    genres: ["Puzzle", "First-Person", "Sci-Fi"],
+                    length: "Medium (10-15 hours)",
+                    pegi: "PEGI 12"
+                },
+                {
+                    title: "Minecraft",
+                    description: "Minecraft focuses on allowing the player to explore, interact with, and modify a dynamically-generated map made of one-cubic-meter-sized blocks. In addition to blocks, the environment features plants, mobs, and items. Some activities in the game include mining for ore, fighting hostile mobs, and crafting new blocks and tools by gathering various resources found in the game. The game's open-ended model allows players to create structures, creations, and artwork on various multiplayer servers or their single-player maps. Other features include redstone circuits for logic computations and remote actions, minecarts and tracks, and a mysterious underworld called the Nether. A designated but completely optional goal of the game is to travel to a dimension called the End, and defeat the ender dragon.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co8fu7.webp",
+                    genres: ["Sandbox", "Survival", "Creative"],
+                    length: "Endless",
+                    pegi: "PEGI 7"
+                },
+                {
+                    title: "Persona 3 Reload",
+                    description: "Step into the shoes of a transfer student thrust into an unexpected fate when entering the hour hidden between one day and the next. Awaken an incredible power and chase the mysteries of the Dark Hour, fight for your friends, and leave a mark on their memories forever. Persona 3 Reload is a captivating reimagining of the genre-defining RPG, reborn for the modern era.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co6z12.webp",
+                    genres: ["JRPG", "Social Simulation", "Turn-based Combat"],
+                    length: "Long (60+ hours)",
+                    pegi: "PEGI 16"
+                },
+                {
+                    title: "Persona 5 Royal",
+                    description: "Persona 5 Royal, a turn-based JRPG with visual novel elements, follows a high school student with a criminal record for a crime he didn't commit. Soon he meets several characters who share similar fates to him, and discovers a metaphysical realm which allows him and his friends to channel their pent-up frustrations into becoming a group of vigilantes reveling in aesthetics and rebellion while fighting corruption.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1nic.webp",
+                    genres: ["JRPG", "Social Simulation", "Turn-based Combat"],
+                    length: "Very Long (100+ hours)",
+                    pegi: "PEGI 16"
+                },
+                {
+                    title: "Persona 4 Golden",
+                    description: "An entry in the JRPG/visual novel hybrid Persona series in which the player has to harness the power of Personas and fight entities called Shadows by forging bonds with the locals of Inaba, a rural Japanese town thrown into unrest by inexplicable murders committed under cover of foggy weather and rumours of a television channel said to broadcast mysterious images on rainy nights",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1n1x.webp",
+                    genres: ["JRPG", "Social Simulation", "Mystery"],
+                    length: "Long (70+ hours)",
+                    pegi: "PEGI 16"
+                },
+                {
+                    title: "Fortnite",
+                    description: "Fortnite is the completely free online game where you and your friends fight to be the last one standing in Battle Royale, join forces to make your own Creative games, or catch a live show at Party Royale.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co96yd.webp",
+                    genres: ["Battle Royale", "Shooter", "Survival"],
+                    length: "Ongoing",
+                    pegi: "PEGI 12"
+                },
+                {
+                    title: "Hatsune Miku: Project DIVA Mega Mix+",
+                    description: "Take center stage in Hatsune Miku’s premier rhythm game starring the world’s #1 virtual pop star herself. From a stunner setlist of songs to an enormous wardrobe to style, it’s the ultimate tour with Miku and friends—all it needs is you.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co4sos.webp",
+                    genres: ["Rhythm", "Music", "Anime"],
+                    length: "Medium (20-30 hours)",
+                    pegi: "PEGI 12"
+                },
+                {
+                    title: "Sonic x Shadow Generations",
+                    description: "Shadow the Hedgehog is back with Classic and Modern Sonic in Sonic X Shadow Generations, an all-new collection featuring two unique experiences! Play as Shadow in a brand-new story campaign featuring never-before-seen abilities that prove why he's known as the Ultimate Life Form! Speed through iconic stages from Shadow's history, discover hidden secrets in an expansive hub world, and unlock new powers to take on Black Doom and save the world. Sonic X Shadow Generations also includes a complete remaster of the highly acclaimed Sonic Generations, a time-traveling adventure featuring a greatest-hits collection of 3D and 2D Sonic stages, now with upgraded visuals and new bonus content.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co8byo.webp",
+                    genres: ["Platformer", "Action", "Adventure"],
+                    length: "Short (10-15 hours)",
+                    pegi: "PEGI 7"
+                },
+                {
+                    title: "Sonic Frontiers",
+                    description: "Worlds will collide in Sonic the Hedgehog’s newest adventure. An experience like never before, accelerate to new heights and experience the thrill of high velocity open-zone freedom. Battle powerful enemies as you speed through the Starfall Islands - landscapes brimming with dense forests, overflowing waterfalls, sizzling deserts and more!",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5p52.webp",
+                    genres: ["Action", "Adventure", "Open World"],
+                    length: "Medium (20-30 hours)",
+                    pegi: "PEGI 7"
+                },
+                {
+                    title: "Celeste",
+                    description: "Help Madeline survive her inner demons on her journey to the top of Celeste Mountain, in this super-tight platformer from the creators of TowerFall. Brave hundreds of hand-crafted challenges, uncover devious secrets, and piece together the mystery of the mountain.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co3byy.webp",
+                    genres: ["Platformer", "Indie", "Precision"],
+                    length: "Medium (10-15 hours)",
+                    pegi: "PEGI 7"
+                },
+                {
+                    title: "Super Mario Galaxy",
+                    description: "A 3D platformer and first Wii entry in the Super Mario franchise, Super Mario Galaxy sees Mario jump across planets and galaxies with varying items, enemies, geographies and gravity mechanics in order to reach his enemy Bowser, who has attacked the Mushroom Kingdom and hijacked Princess Peach's castle with her inside.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co21ro.webp",
+                    genres: ["Platformer", "Adventure", "3D"],
+                    length: "Medium (15-20 hours)",
+                    pegi: "PEGI 3"
+                },
+                {
+                    title: "Super Mario Odyssey",
+                    description: "Explore incredible places far from the Mushroom Kingdom as you join Mario and his new ally Cappy on a massive, globe-trotting 3D adventure. Use amazing new abilities, like the power to capture and control objects, animals, and enemies to collect Power Moons so you can power up the Odyssey airship and save Princess Peach from Bowser’s wedding plans!",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1mxf.webp",
+                    genres: ["Platformer", "Adventure", "3D"],
+                    length: "Medium (15-20 hours)",
+                    pegi: "PEGI 7"
+                },
+                {
+                    title: "Sonic Adventure 2",
+                    description: "Sonic Adventure 2 is the sequel to Sonic Adventure. It was the final Sonic game for the Dreamcast after Sega discontinued the console. Two new playable characters were introduced, Shadow and Rouge, who would go on to become two of the most recurring characters in the Sonic series. The story features good vs evil: Sonic, Tails and Knuckles attempt to save the world, while Shadow, Doctor Eggman and Rouge attempt to conquer it. The levels are divided into three gameplay styles: fast-paced platforming for Sonic and Shadow, multi-directional shooting for Tails and Eggman, and action-exploration for Knuckles and Rouge.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1te4.webp",
+                    genres: ["Platformer", "Action", "Adventure"],
+                    length: "Medium (15-20 hours)",
+                    pegi: "PEGI 7"
+                },
+                {
+                    title: "Slime Rancher",
+                    description: "Slime Rancher is a charming, first-person, sandbox experience. Play as Beatrix LeBeau: a plucky, young rancher who sets out for a life a thousand light years away from Earth on the 'Far, Far Range.' Each day will present new challenges and risky opportunities as you attempt to amass a great fortune in the business of slime ranching. Collect colorful slimes, grow crops, harvest resources, and explore the untamed wilds through the mastery of your all-purpose vacpack.",
+                    image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co73i2.webp",
+                    genres: ["Simulation", "Adventure", "First-Person"],
+                    length: "Long (30+ hours)",
+                    pegi: "PEGI 3"
+                },
+                {
+        title: "Hollow Knight",
+        description: "Hollow Knight is a challenging and atmospheric action-adventure game set in the ruined kingdom of Hallownest. Players explore a vast interconnected world, battle challenging foes, and uncover the secrets of the kingdom.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co93cr.webp",
+        genres: ["Action", "Adventure", "Metroidvania"],
+        length: "Long (30+ hours)",
+        pegi: "PEGI 7"
+    },
+    {
+        title: "Phasmophobia",
+        description: "Phasmophobia is a co-op horror game where players investigate haunted locations as ghost hunters. Using tools like EMF readers and spirit boxes, you must gather evidence of ghost activity and survive terrifying encounters.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2hby.webp",
+        genres: ["Horror", "Simulation", "Co-op"],
+        length: "Medium (10-20 hours)",
+        pegi: "PEGI 16"
+    },
+    {
+        title: "Rain World",
+        description: "Rain World is a survival platformer where players control a slugcat navigating a harsh, post-apocalyptic ecosystem. Use cunning and agility to evade predators, find food, and survive deadly rainstorms.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co24pm.webp",
+        genres: ["Survival", "Platformer", "Adventure"],
+        length: "Long (20-30 hours)",
+        pegi: "PEGI 12"
+    },
+    {
+        title: "Red Dead Redemption 2",
+        description: "Red Dead Redemption 2 is an open-world action-adventure game set in the American West in 1899. Follow Arthur Morgan, an outlaw trying to survive as government forces and rival gangs close in.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1q1f.webp",
+        genres: ["Action", "Adventure", "Open World"],
+        length: "Very Long (50+ hours)",
+        pegi: "PEGI 18"
+    },
+    {
+        title: "Terraria",
+        description: "Terraria is a 2D sandbox adventure game where players explore, craft, build, and fight through randomly generated worlds. Fight enemies, gather resources, and build structures in a limitless playground.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1rbo.webp",
+        genres: ["Sandbox", "Adventure", "Action"],
+        length: "Endless",
+        pegi: "PEGI 12"
+    },
+    {
+        title: "The Stanley Parable",
+        description: "The Stanley Parable is a narrative-driven first-person exploration game that challenges player agency. Explore branching paths and discover surprising outcomes based on your choices.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1rc9.webp",
+        genres: ["Adventure", "Narrative"],
+        length: "Short (3-5 hours)",
+        pegi: "PEGI 12"
+    },
+    {
+        title: "Danganronpa: Trigger Happy Havoc",
+        description: "In Danganronpa you'll dive into a series of class trials and expose the lies and contradictions of your classmates in order to find out who's behind each grisly murder. In each trial, you'll have to use the evidence and testimony collected during your investigation to literally shoot down your opponent's assertions. By combining logic and motion, Danganronpa offers an exciting and unprecedented gaming experience.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1n1w.webp",
+        genres: ["Visual Novel", "Mystery", "Adventure"],
+        length: "Medium (20-30 hours)",
+        pegi: "PEGI 16"
+    },
+    {
+        title: "Hades",
+        description: "Hades is a roguelike dungeon crawler set in the Greek Underworld. Play as Zagreus, son of Hades, as you fight your way to the surface while uncovering a gripping story and forging relationships with Olympian gods.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co39vc.webp",
+        genres: ["Action", "Roguelike", "Adventure"],
+        length: "Medium (15-20 hours)",
+        pegi: "PEGI 12"
+    },
+    {
+        title: "Hitman",
+        description: "Become the Master Assassin in an intense spy-thriller story. As Agent 47, you perform contract hits on powerful, high-profile targets in exotic locations around the world. Gameplay focuses on taking out targets in huge and intricate sandbox levels with complete freedom of approach. Where to go, when to strike and who to kill – it is all up to you.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2fgr.webp",
+        genres: ["Shooter","Tactical","Adventure"],
+        length: "Medium (15-20 hours)",
+        pegi: "PEGI 18"
+    },
+    {
+        title: "Dead by Daylight",
+        description: "Dead by Daylight is an asymmetric multiplayer horror game where one player becomes the killer and four others try to survive by repairing generators and escaping the map.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5zky.webp",
+        genres: ["Horror", "Multiplayer", "Survival"],
+        length: "Endless",
+        pegi: "PEGI 18"
+    },
+    {
+        title: "Fallout 76",
+        description: "Bethesda Game Studios welcome you to Fallout 76. Twenty-five years after the bombs fall you and your fellow Vault Dwellers, chosen from the nation’s best and brightest, emerge into post-nuclear America on Reclamation Day, 2102. Play solo or join together as you explore, quest, build, and triumph against the wasteland’s greatest threats. Explore a vast wasteland, devastated by nuclear war, in this open-world multiplayer addition to the Fallout story. Experience the largest, most dynamic world ever created in the legendary Fallout universe.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1yc4.webp",
+        genres: ["Shooter", "RPG", "Open World"],
+        length: "Very Long (30-115 Hours)",
+        pegi: "PEGI 18"
+    },
+    {
+        title: "Mouthwashing",
+        description: "The five crew members of The Tulpar are stranded in the empty reaches of space, shrouded in perpetual sunset. God is not watching.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co70oi.webp",
+        genres: ["Adventure", "Indie"],
+        length: "Short (2-3 Hours)",
+        pegi: "N/A"
+    },
+    {
+        title: "Slay the Spire",
+        description: "Slay the Spire is a roguelike deck-building game where players climb a procedurally generated spire, fighting enemies and building a unique deck of cards for strategic combat.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1iyf.webp",
+        genres: ["Roguelike", "Card Game", "Strategy"],
+        length: "Medium (15-20 hours)",
+        pegi: "PEGI 7"
+    },
+    {
+        title: "Marvel Rivals",
+        description: "Marvel Rivals is an hero shooter video game developed and published by NetEase Games in collaboration with Marvel Games. The game is free-to-play with a current line up of 33 characters from Marvel Comics",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co94j3.webp",
+        genres: ["Shooter", "Multiplayer"],
+        length: "Ongoing",
+        pegi: "PEGI 12"
+    },
+    {
+        title: "Lethal Company",
+        description: "A co-op horror roguelite about an abandoned industrial moon.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co5ive.webp",
+        genres: ["Horror", "Indie", "Multiplayer"],
+        length: "Endless",
+        pegi: "PEGI 16"
+    },
+    {
+        title: "The Last of Us",
+        description: "A third person shooter/stealth/survival hybrid, in which twenty years after the outbreak of a parasitic fungus which takes over the neural functions of humans, Joel, a Texan with a tragic familial past, finds himself responsible with smuggling a fourteen year old girl named Ellie to a militia group called the Fireflies, while avoiding strict and deadly authorities, infected fungal hosts and other violent survivors.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7f.webp",
+        genres: ["Shooter","Adventure","Story"],
+        length: "Medium (15-20 Hours)",
+        pegi: "PEGI 18"
+    },
+    {
+        title: "Helldivers 2",
+        description: "The Galaxy’s Last Line of Offence. Enlist in the Helldivers and join the fight for freedom across a hostile galaxy in a fast, frantic, and ferocious third-person shooter.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co741o.webp",
+        genres: ["Shooter","Tactical", "Multiplayer"],
+        length: "Endless",
+        pegi: "PEGI 18"
+    },
+    {
+        title: "Subnautica",
+        description: "Subnautica is an open-world survival game set on an alien ocean planet. Players explore underwater environments, gather resources, and craft equipment while uncovering the planet's mysteries.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1iqw.webp",
+        genres: ["Survival", "Adventure", "Open World"],
+        length: "Long (30+ hours)",
+        pegi: "PEGI 12"
+    },
+    {
+        title: "Little Nightmares",
+        description: "Little Nightmares is a dark, atmospheric puzzle-platformer where players control a young girl named Six, navigating a world of grotesque creatures and horrifying scenarios.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co1rdi.webp",
+        genres: ["Puzzle", "Platformer", "Horror"],
+        length: "Short (4-6 hours)",
+        pegi: "PEGI 16"
+    },
+    {
+        title: "Stray",
+        description: "Stray is a third-person adventure game where players control a stray cat exploring a cyberpunk city. Solve puzzles, interact with robots, and uncover the story of the world through the eyes of a feline.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co4tt2.webp",
+        genres: ["Adventure", "Puzzle", "Third-Person"],
+        length: "Short (5-8 hours)",
+        pegi: "PEGI 12"
+    },
+    {
+        title: "Cuphead",
+        description: "Cuphead is a run-and-gun platformer known for its hand-drawn 1930s cartoon art style and challenging gameplay. Players face a series of tough bosses while trying to repay a deal with the devil.",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co62ao.webp",
+        genres: ["Platformer", "Action", "Shooter"],
+        length: "Medium (10-15 hours)",
+        pegi: "PEGI 7"
+    },
+    {
+        title: "Webfishing",
+        description: "Webfishing is a multiplayer chatroom-focused fishing game! Relax and fish (on the web!)",
+        image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co8xit.webp",
+        genres: ["Indie", "Multiplayer"],
+        length: "Endless",
+        pegi: "N/A"
+    }
+
+            ];
+            return games.sort(() => 0.5 - Math.random()).slice(0, count);
+        }
+
+        function displaySuggestions(suggestions) {
+            const resultSection = document.getElementById('results');
+            const suggestionsList = document.getElementById('suggestions-list');
+            suggestionsList.innerHTML = '';
+
+            suggestions.forEach(game => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <img src="${game.image}" alt="${game.title} cover art">
+                    <div class="game-info">
+                        <div class="game-title">${game.title}</div>
+                        <div class="game-genres">${game.genres.join(', ')}</div>
+                        <div class="game-length">${game.length}</div>
+                        <div class="game-pegi">${game.pegi}</div>
+                    </div>
+                `;
+                li.addEventListener('click', () => showGameDetails(game));
+                suggestionsList.appendChild(li);
+            });
+
+            resultSection.style.display = 'block';
+        }
+
+        function showGameDetails(game) {
+            const modal = document.getElementById('gameModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalImage = document.getElementById('modalImage');
+            const modalDescription = document.getElementById('modalDescription');
+            const modalGenres = document.getElementById('modalGenres');
+            const modalLength = document.getElementById('modalLength');
+            const modalPegi = document.getElementById('modalPegi');
+
+            modalTitle.textContent = game.title;
+            modalImage.src = game.image;
+            modalImage.alt = `${game.title} cover art`;
+            modalDescription.textContent = game.description;
+            modalGenres.textContent = `Genres: ${game.genres.join(', ')}`;
+            modalLength.textContent = `Length: ${game.length}`;
+            modalPegi.textContent = `PEGI Rating: ${game.pegi}`;
+
+            modal.style.display = 'block';
+        }
+
+        // Close the modal when clicking on <span> (x)
+        document.querySelector('.close').onclick = function() {
+            document.getElementById('gameModal').style.display = 'none';
+        }
+
+        // Close the modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('gameModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
+
